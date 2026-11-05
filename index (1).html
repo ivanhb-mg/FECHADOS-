@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FECHADOS</title>
+  <style>
+    :root { --blue: #005eb8; --green: #008037; --red: #c62828; --orange: #ef6c00; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; padding: 14px 0 40px; font-family: Arial, Helvetica, sans-serif; background: #fff; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
+
+    /* TABS */
+    .tabs { width: 88%; max-width: 300px; display: flex; gap: 8px; margin-bottom: 14px; }
+    .tab { flex: 1; height: 40px; border: 3px solid var(--blue); border-radius: 14px; background: #fff; font-size: 12px; font-weight: 900; color: var(--blue); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .tab.active { background: var(--blue); color: #fff; }
+
+    /* ===== MODO INDIVIDUAL ===== */
+    #modoIndividual { width: 100%; display: flex; flex-direction: column; align-items: center; }
+    .stats-box { width: 88%; max-width: 300px; border: 4px solid #000; border-radius: 22px; padding: 12px; background: #fff; }
+    .stats-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #ddd; font-size: 13px; font-weight: 900; }
+    .stats-row:last-child { border-bottom: none; }
+    .stats-value { color: var(--blue); }
+    .main-box { width: 88%; max-width: 300px; margin-top: 14px; border: 4px solid var(--blue); border-radius: 28px; overflow: hidden; background: #fff; }
+    .search-box { height: 56px; display: flex; align-items: center; justify-content: center; position: relative; }
+    #search { width: 100%; height: 100%; border: none; outline: none; text-align: center; font-size: 15px; font-weight: 900; background: #fff; color: var(--blue); caret-color: var(--blue); padding-right: 44px; }
+    #clearSearch { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border: none; border-radius: 50%; background: var(--blue); color: #fff; font-size: 14px; font-weight: 900; cursor: pointer; display: none; align-items: center; justify-content: center; padding: 0; z-index: 5; }
+    #suggestions { position: absolute; top: 56px; left: 4%; width: 92%; max-height: 220px; overflow: auto; background: #fff; border: 2px solid var(--blue); border-radius: 12px; display: none; z-index: 9999; }
+    .sug { padding: 10px; font-size: 11px; font-weight: 900; border-bottom: 1px solid #eee; background: #fff; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th, td { border: 3px solid var(--blue); text-align: center; vertical-align: middle; }
+    th { height: 38px; font-size: 8px; font-weight: 900; color: var(--blue); }
+    td { height: 92px; position: relative; }
+    .left { font-size: 8px; font-weight: 900; color: var(--blue); }
+    .fecha, .venc { font-size: 18px; font-weight: 900; line-height: 1.05; white-space: pre-line; }
+    .venc { color: var(--green); }
+    .venc-manual { color: var(--orange); }
+    .hora { font-size: 8px; font-weight: 900; }
+    .hora-green { font-size: 8px; font-weight: 900; color: var(--green); }
+    .btn { width: 88%; max-width: 300px; height: 54px; margin-top: 14px; border: none; border-radius: 16px; background: #efefef; font-size: 16px; font-weight: 900; color: #555; }
+    .btn-blue { background: var(--blue); color: #fff; }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-orange { background: var(--orange); color: #fff; }
+
+    /* FAVORITOS */
+    #favoritosBox { width: 88%; max-width: 300px; margin-top: 14px; display: none; }
+    #favoritosBox h3 { margin: 0 0 8px 0; font-size: 11px; font-weight: 900; color: var(--orange); text-align: center; }
+    .fav-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .fav-item { height: 56px; border: 2px solid var(--orange); border-radius: 12px; background: #fff8f0; font-size: 9px; font-weight: 900; color: var(--orange); display: flex; align-items: center; justify-content: center; text-align: center; padding: 4px; cursor: pointer; line-height: 1.2; position: relative; }
+    .fav-item .fav-star { position: absolute; top: 2px; right: 4px; font-size: 10px; }
+    .fav-add { height: 56px; border: 2px dashed #ccc; border-radius: 12px; background: #fafafa; font-size: 20px; color: #aaa; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+    /* HISTORIAL */
+    #historialBox { width: 88%; max-width: 300px; margin-top: 14px; border: 3px dashed var(--blue); border-radius: 16px; padding: 10px; background: #f8fbff; display: none; }
+    #historialBox h3 { margin: 0 0 8px 0; font-size: 11px; font-weight: 900; color: var(--blue); text-align: center; }
+    .hist-filter { width: 100%; height: 32px; border: 2px solid #dde; border-radius: 10px; text-align: center; font-size: 11px; font-weight: 900; margin-bottom: 8px; outline: none; }
+    .hist-item { display: flex; align-items: center; padding: 8px 10px; border-bottom: 1px solid #dde; font-size: 10px; font-weight: 700; cursor: pointer; border-radius: 8px; transition: background 0.15s; -webkit-tap-highlight-color: rgba(0,94,184,0.15); gap: 6px; }
+    .hist-item:last-child { border-bottom: none; }
+    .hist-item:active { background: #e6f0ff; }
+    .hist-icon { font-size: 14px; flex-shrink: 0; }
+    .hist-name { flex: 1; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hist-dates { color: var(--green); font-size: 9px; flex-shrink: 0; text-align: right; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .hist-clear { width: 100%; height: 32px; margin-top: 8px; border: none; border-radius: 10px; background: #eee; font-size: 10px; font-weight: 900; color: #888; cursor: pointer; }
+
+    /* ===== MODO MASIVO ===== */
+    #modoMasivo { width: 88%; max-width: 300px; display: none; flex-direction: column; align-items: center; }
+    .masivo-header { width: 100%; text-align: center; font-size: 12px; font-weight: 900; color: var(--blue); margin-bottom: 10px; padding: 10px; border: 2px dashed var(--blue); border-radius: 12px; background: #f2f8ff; line-height: 1.4; }
+    .masivo-search-box { width: 100%; position: relative; margin-bottom: 10px; }
+    .masivo-search { width: 100%; height: 48px; border: 3px solid var(--blue); border-radius: 14px; text-align: center; font-size: 14px; font-weight: 900; color: var(--blue); outline: none; }
+    .masivo-sug { position: absolute; top: 50px; left: 2%; width: 96%; max-height: 200px; overflow: auto; background: #fff; border: 2px solid var(--blue); border-radius: 12px; display: none; z-index: 9999; }
+    .masivo-sug-item { padding: 10px; font-size: 12px; font-weight: 900; border-bottom: 1px solid #eee; cursor: pointer; }
+    .masivo-sug-item:active { background: #e6f0ff; }
+    .cesta-box { width: 100%; border: 3px solid var(--green); border-radius: 16px; padding: 10px; background: #f0fff4; margin-bottom: 10px; display: none; }
+    .cesta-box h4 { margin: 0 0 8px 0; font-size: 11px; font-weight: 900; color: var(--green); text-align: center; }
+    .cesta-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #c8e6c9; font-size: 11px; font-weight: 700; cursor: pointer; }
+    .cesta-item:last-child { border-bottom: none; }
+    .cesta-item:active { background: #e0f7e0; }
+    .cesta-remove { color: var(--red); font-size: 16px; cursor: pointer; padding: 0 4px; }
+    .cesta-count { font-size: 11px; font-weight: 900; color: var(--green); margin-bottom: 8px; text-align: center; }
+    .cesta-badges { font-size: 9px; margin-top: 2px; }
+    .cesta-badge { display: inline-block; padding: 1px 4px; border-radius: 4px; margin-right: 3px; font-size: 8px; }
+    .badge-recib { background: var(--blue); color: #fff; }
+    .badge-recibVenc { background: var(--orange); color: #fff; }
+    .badge-prep { background: #6a1b9a; color: #fff; }
+    .badge-linea { background: #1565c0; color: #fff; }
+
+    /* RESULTADOS MASIVOS */
+    #masivoResultados { width: 100%; margin-top: 14px; display: none; }
+    .res-header { font-size: 12px; font-weight: 900; color: var(--green); text-align: center; margin-bottom: 8px; padding: 8px; background: #f0fff4; border-radius: 10px; }
+    .res-card { border: 3px solid var(--blue); border-radius: 16px; background: #fff; margin-bottom: 10px; overflow: hidden; cursor: pointer; transition: transform 0.1s; }
+    .res-card:active { transform: scale(0.98); }
+    .res-card-header { background: var(--blue); color: #fff; padding: 8px 12px; font-size: 11px; font-weight: 900; }
+    .res-card-body { padding: 10px 12px; }
+    .res-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 10px; font-weight: 700; }
+    .res-row .label { color: #666; }
+    .res-row .val-recib { color: var(--blue); font-weight: 900; }
+    .res-row .val-prep { color: var(--green); font-weight: 900; }
+    .res-row .val-linea { color: var(--orange); font-weight: 900; }
+    .res-hint { font-size: 9px; color: #888; text-align: center; margin-top: 6px; font-style: italic; }
+
+    /* MODALES ADMIN */
+    #params, #rules { position: fixed; inset: 0; background: #fff; padding: 12px; overflow: auto; z-index: 99999; display: none; }
+    .action { width: 100%; height: 48px; border: none; border-radius: 14px; font-size: 15px; font-weight: 900; margin-bottom: 10px; }
+    .save { background: var(--blue); color: #fff; }
+    .close { background: #eee; }
+    #p-table, #r-table { width: 100%; border-collapse: collapse; }
+    #p-table th, #p-table td, #r-table th, #r-table td { border: 2px solid var(--blue); padding: 6px; font-size: 10px; }
+    #p-table input { width: 100%; border: none; outline: none; font-size: 10px; font-weight: 900; }
+
+    /* PICKER COMBINADO */
+    #horaPickerOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100000; }
+    #horaPickerBox { background: #fff; border-radius: 20px; width: 300px; padding: 20px; text-align: center; }
+    #horaPickerTitle { font-size: 16px; font-weight: 900; color: var(--blue); margin-bottom: 14px; }
+    .fecha-picker-section { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 2px dashed #eee; }
+    .fecha-picker-label { font-size: 10px; font-weight: 900; color: #888; margin-bottom: 8px; text-transform: uppercase; }
+    .fecha-picker-row { display: flex; justify-content: center; align-items: center; gap: 6px; }
+    .fecha-picker-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .fecha-picker-btn { width: 52px; height: 36px; border: 2px solid #ddd; border-radius: 8px; background: #fff; font-size: 14px; font-weight: 900; color: #333; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-appearance: none; appearance: none; text-align: center; }
+    .fecha-picker-btn.selected { border-color: var(--blue); background: var(--blue); color: #fff; }
+    .fecha-picker-sub { font-size: 8px; font-weight: 900; color: #aaa; }
+    .hora-picker-row { display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 18px; }
+    .hora-picker-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .hora-picker-btn { width: 64px; height: 44px; border: 2px solid #ddd; border-radius: 10px; background: #fff; font-size: 16px; font-weight: 900; color: #333; display: flex; align-items: center; justify-content: center; cursor: pointer; -webkit-appearance: none; appearance: none; text-align: center; }
+    .hora-picker-btn.selected { border-color: var(--blue); background: var(--blue); color: #fff; }
+    .hora-picker-label { font-size: 9px; font-weight: 900; color: #888; text-transform: uppercase; }
+    .hora-picker-sep { font-size: 20px; font-weight: 900; color: #333; margin-top: -10px; }
+    .hora-picker-actions { display: flex; gap: 10px; }
+    .hora-picker-actions button { flex: 1; height: 44px; border: none; border-radius: 12px; font-size: 14px; font-weight: 900; cursor: pointer; }
+    .hora-picker-cancel { background: #eee; color: #555; }
+    .hora-picker-ok { background: var(--blue); color: #fff; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .animate-in { animation: fadeIn 0.2s ease-out; }
+
+    /* Indicador de fecha manual */
+    .manual-badge { position: absolute; top: 2px; right: 2px; font-size: 8px; background: var(--orange); color: #fff; padding: 1px 4px; border-radius: 4px; font-weight: 900; }
+  </style>
+</head>
+<body>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" id="tabIndividual" onclick="cambiarModo('individual')">INDIVIDUAL</button>
+    <button class="tab" id="tabMasivo" onclick="cambiarModo('masivo')">MASIVO</button>
+  </div>
+
+  <!-- ===== MODO INDIVIDUAL ===== -->
+  <div id="modoIndividual">
+    <div class="stats-box">
+      <div class="stats-row"><span>CERRADO:</span><span id="rTop" class="stats-value">--</span></div>
+      <div class="stats-row"><span>ABIERTO:</span><span id="pTop" class="stats-value">--</span></div>
+      <div class="stats-row"><span>EN LÍNEA:</span><span id="lTop" class="stats-value">--</span></div>
+    </div>
+
+    <div class="main-box">
+      <div class="search-box">
+        <input id="search" type="text" placeholder="BUSCAR" autocomplete="off" oninput="buscar(this.value)" />
+        <button id="clearSearch" onclick="limpiarBusqueda()">✕</button>
+        <div id="suggestions"></div>
+      </div>
+      <table>
+        <tr><th></th><th>INIC</th><th>FECHA</th><th>HORA</th><th>VENC.</th><th>HORA</th></tr>
+        <tr>
+          <td class="left">RECIB.</td><td>--</td>
+          <td onclick="abrirFechaHoraPicker('recib')"><div id="recibFecha" class="fecha">--</div></td>
+          <td><div class="hora">--</div></td>
+          <td onclick="abrirFechaHoraPicker('recibVenc')" style="cursor:pointer;position:relative;">
+            <div id="recibVenc" class="venc">--</div>
+            <span id="recibVencManualBadge" class="manual-badge" style="display:none;">EMP</span>
+          </td>
+          <td><div class="hora-green">--</div></td>
+        </tr>
+        <tr>
+          <td class="left">PREP.</td><td>--</td>
+          <td onclick="abrirFechaHoraPicker('prep')"><div id="prepFecha" class="fecha">--</div></td>
+          <td><div id="prepHoraTxt" class="hora">--</div></td>
+          <td><div id="prepVenc" class="venc">--</div></td>
+          <td><div id="prepHoraVenc" class="hora-green">--</div></td>
+        </tr>
+        <tr>
+          <td class="left">LINEA</td><td>--</td>
+          <td onclick="abrirFechaHoraPicker('linea')"><div id="lineaFecha" class="fecha">--</div></td>
+          <td><div id="lineaHoraTxt" class="hora">--</div></td>
+          <td><div id="lineaVenc" class="venc">--</div></td>
+          <td><div id="lineaHoraVenc" class="hora-green">--</div></td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="width:88%;max-width:300px;display:flex;gap:8px;margin-top:14px;">
+      <button style="flex:1;height:54px;border:none;border-radius:16px;background:#efefef;font-size:14px;font-weight:900;color:#555;" onclick="recalcularTodo()">RECALCULAR</button>
+      <button style="flex:1;height:54px;border:none;border-radius:16px;background:#efefef;font-size:14px;font-weight:900;color:#555;" onclick="limpiar()">BORRAR</button>
+    </div>
+
+    <button class="btn btn-blue" onclick="cambiarModo('masivo')">📦 IR A MASIVO</button>
+
+    <div id="favoritosBox">
+      <h3>⭐ FAVORITOS</h3>
+      <div class="fav-grid" id="favGrid"></div>
+    </div>
+
+    <div id="historialBox">
+      <h3>📋 HISTORIAL</h3>
+      <input type="text" class="hist-filter" id="histFilter" placeholder="🔍 BUSCAR EN HISTORIAL" oninput="filtrarHistorial(this.value)" />
+      <div id="historialLista"></div>
+      <button class="hist-clear" onclick="limpiarHistorial()">LIMPIAR HISTORIAL</button>
+    </div>
+
+    <div id="versionTabla" style="margin-top:18px;font-size:10px;font-weight:800;color:#999;text-align:center;">TABLA DE VIDA ÚTIL</div>
+  </div>
+
+  <!-- ===== MODO MASIVO ===== -->
+  <div id="modoMasivo">
+    <div class="masivo-header">
+      📦 BUSCA PRODUCTOS Y TOCA PARA EDITAR<br>
+      <span style="font-size:10px;color:#666;font-weight:700;">Toca cada producto para establecer sus fechas</span>
+    </div>
+
+    <!-- Buscador de productos para agregar -->
+    <div class="masivo-search-box">
+      <input type="text" class="masivo-search" id="masivoSearch" placeholder="🔍 ESCRIBE Y TOCA PARA AGREGAR..." autocomplete="off" oninput="buscarMasivo(this.value)" />
+      <div class="masivo-sug" id="masivoSug"></div>
+    </div>
+
+    <!-- Cesta de productos seleccionados -->
+    <div class="cesta-count" id="cestaCount">0 productos en cesta</div>
+    <div class="cesta-box" id="cestaBox">
+      <h4>🛒 TOCA UN PRODUCTO PARA EDITAR SUS FECHAS</h4>
+      <div id="cestaLista"></div>
+    </div>
+
+    <button class="btn btn-green" onclick="aplicarMasivo()">✅ CALCULAR TODOS</button>
+    <button class="btn" onclick="limpiarMasivo()">🗑️ LIMPIAR TODO</button>
+
+    <!-- Resultados masivos -->
+    <div id="masivoResultados">
+      <div class="res-header">✅ RESULTADOS</div>
+      <div id="masivoResultadosLista"></div>
+    </div>
+  </div>
+
+  <!-- Inputs hidden -->
+  <input type="hidden" id="recibDate" />
+  <input type="hidden" id="recibVencDate" />
+  <input type="hidden" id="prepDate" />
+  <input type="hidden" id="lineaDate" />
+
+  <!-- Picker combinado -->
+  <div id="horaPickerOverlay" onclick="if(event.target===this)cerrarHoraPicker()">
+    <div id="horaPickerBox" class="animate-in">
+      <div id="horaPickerTitle">SELECCIONAR FECHA Y HORA</div>
+      <div class="fecha-picker-section">
+        <div class="fecha-picker-label">FECHA</div>
+        <div class="fecha-picker-row">
+          <div class="fecha-picker-col">
+            <button class="fecha-picker-btn" onclick="fhCambiarDia(1)">▲</button>
+            <button class="fecha-picker-btn selected" id="fhDiaVal">17</button>
+            <button class="fecha-picker-btn" onclick="fhCambiarDia(-1)">▼</button>
+            <span class="fecha-picker-sub" id="fhDiaNom">Jue</span>
+          </div>
+          <div class="fecha-picker-col">
+            <button class="fecha-picker-btn" onclick="fhCambiarMes(1)">▲</button>
+            <button class="fecha-picker-btn selected" id="fhMesVal">07</button>
+            <button class="fecha-picker-btn" onclick="fhCambiarMes(-1)">▼</button>
+            <span class="fecha-picker-sub" id="fhMesNom">Jul</span>
+          </div>
+          <div class="fecha-picker-col">
+            <button class="fecha-picker-btn" onclick="fhCambiarAnio(1)">▲</button>
+            <button class="fecha-picker-btn selected" id="fhAnioVal">26</button>
+            <button class="fecha-picker-btn" onclick="fhCambiarAnio(-1)">▼</button>
+            <span class="fecha-picker-sub">Año</span>
+          </div>
+        </div>
+      </div>
+      <div class="hora-picker-row" id="horaSection">
+        <div class="hora-picker-col">
+          <span class="hora-picker-label">Hora</span>
+          <button class="hora-picker-btn" onclick="hpCambiarHora(1)">▲</button>
+          <button class="hora-picker-btn selected" id="hpHoraVal">12</button>
+          <button class="hora-picker-btn" onclick="hpCambiarHora(-1)">▼</button>
+        </div>
+        <div class="hora-picker-sep">:</div>
+        <div class="hora-picker-col">
+          <span class="hora-picker-label">Min</span>
+          <button class="hora-picker-btn" onclick="hpCambiarMin(1)">▲</button>
+          <button class="hora-picker-btn selected" id="hpMinVal">00</button>
+          <button class="hora-picker-btn" onclick="hpCambiarMin(-1)">▼</button>
+        </div>
+        <div class="hora-picker-col">
+          <span class="hora-picker-label">AM/PM</span>
+          <button class="hora-picker-btn" onclick="hpCambiarAmpm()">▲</button>
+          <button class="hora-picker-btn selected" id="hpAmpmVal">AM</button>
+          <button class="hora-picker-btn" onclick="hpCambiarAmpm()">▼</button>
+        </div>
+      </div>
+      <div class="hora-picker-actions">
+        <button class="hora-picker-cancel" onclick="cerrarHoraPicker()">CANCELAR</button>
+        <button class="hora-picker-ok" onclick="confirmarFechaHoraPicker()">ACEPTAR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal edición de producto en masivo -->
+  <div id="editarMasivoOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:100001;">
+    <div style="background:#fff;border-radius:20px;width:300px;padding:20px;text-align:center;" class="animate-in">
+      <div style="font-size:14px;font-weight:900;color:var(--blue);margin-bottom:8px;" id="editarMasivoTitulo">EDITAR PRODUCTO</div>
+      <div style="font-size:11px;color:#666;margin-bottom:14px;" id="editarMasivoNombre"></div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+        <div style="font-size:10px;color:#888;font-weight:700;margin-bottom:4px;text-align:left;padding-left:4px;">📅 FECHAS ESTABLECIDAS:</div>
+        <div id="editarMasivoFechasActuales" style="font-size:10px;color:#555;text-align:left;padding:8px;background:#f5f5f5;border-radius:8px;margin-bottom:8px;line-height:1.6;"></div>
+        <button style="height:44px;border:3px solid var(--blue);border-radius:12px;background:#fff;font-size:12px;font-weight:900;color:var(--blue);cursor:pointer;" onclick="editarMasivoCampo('recib')">📅 FECHA RECIBIDO</button>
+        <button style="height:44px;border:3px solid var(--orange);border-radius:12px;background:#fff;font-size:12px;font-weight:900;color:var(--orange);cursor:pointer;" onclick="editarMasivoCampo('recibVenc')">📦 VENC. EMPAQUE (PRIORIDAD)</button>
+        <button style="height:44px;border:3px solid var(--blue);border-radius:12px;background:#fff;font-size:12px;font-weight:900;color:var(--blue);cursor:pointer;" onclick="editarMasivoCampo('prep')">📅 FECHA PREP + HORA</button>
+        <button style="height:44px;border:3px solid var(--blue);border-radius:12px;background:#fff;font-size:12px;font-weight:900;color:var(--blue);cursor:pointer;" onclick="editarMasivoCampo('linea')">📅 FECHA LINEA + HORA</button>
+      </div>
+      <button style="width:100%;height:44px;border:none;border-radius:12px;background:#eee;font-size:14px;font-weight:900;color:#555;cursor:pointer;" onclick="cerrarEditarMasivo()">CERRAR</button>
+    </div>
+  </div>
+
+  <script>
+
+    // ===== PRODUCTOS =====
+    let productosDefault = [
+      { id: 1, n: 'ALITAS DE POLLO - LOCAL', r: '7 DÍAS', p: '7 DÍAS', l: '24 HORAS' },
+      { id: 2, n: 'POPPERS DE POLLO', r: '7 DÍAS', p: '7 DÍAS', l: '24 HORAS' },
+      { id: 3, n: 'POLLO ASADO - IMPORTADO (E)', r: '10 DÍAS', p: '7 DÍAS', l: '24 HORAS' },
+      { id: 4, n: 'SALCHICHA ITALIANA (I)', r: '12 DÍAS', p: '7 DÍAS', l: '24 HORAS' },
+      { id: 5, n: 'CHORIZO - LOCAL', r: '7 DÍAS', p: '4 DÍAS', l: '24 HORAS' },
+      { id: 6, n: 'CARNE DE RES - LOCAL (B)', r: '12 DÍAS', p: '7 DÍAS', l: '48 HORAS' },
+      { id: 7, n: 'SALCHICHA DE CERDO (SC)', r: '12 DÍAS', p: '7 DÍAS', l: '48 HORAS' },
+      { id: 8, n: 'TOCINO (K)', r: '30 DÍAS', p: '7 DÍAS', l: '48 HORAS' },
+      { id: 9, n: 'PEPPERONI DE CERDO (P)', r: '30 DÍAS', p: '7 DÍAS', l: '48 HORAS' },
+      { id: 10, n: 'JAMÓN - LOCAL (H)', r: '14 DÍAS', p: '7 DÍAS', l: '48 HORAS' },
+      { id: 11, n: 'QUESO MOZZARELLA', r: '14 DÍAS', p: '7 DÍAS', l: '24 HORAS' },
+      { id: 12, n: 'QUESO EN TIRAS', r: '14 DÍAS', p: '7 DÍAS', l: '24 HORAS' },
+      { id: 13, n: 'MEZCLA DE 3 QUESOS', r: '7 DÍAS', p: '7 DÍAS', l: '24 HORAS' },
+      { id: 14, n: 'MEZCLA DE 2 QUESOS', r: '7 DÍAS', p: '7 DÍAS', l: '24 HORAS' },
+      { id: 15, n: 'CHAMPIÑÓN (M)', r: 'SEGÚN EMPAQUE', p: '24 HORAS', l: '11:59 P.M.' },
+      { id: 16, n: 'CEBOLLA BLANCA/ROJA (O)', r: 'SEGÚN EMPAQUE', p: '2 DÍAS', l: '11:59 P.M.' },
+      { id: 17, n: 'PIMIENTO ROJO (GR)', r: 'SEGÚN EMPAQUE', p: '2 DÍAS', l: '11:59 P.M.' },
+      { id: 18, n: 'PIMIENTO VERDE (G)', r: 'SEGÚN EMPAQUE', p: '2 DÍAS', l: '11:59 P.M.' },
+      { id: 19, n: 'TOMATE (T)', r: 'SEGÚN EMPAQUE', p: '2 DÍAS', l: '11:59 P.M.' },
+      { id: 20, n: 'ACEITUNA NEGRA (R)', r: 'SEGÚN EMPAQUE', p: '7 DÍAS', l: '48 HORAS' },
+      { id: 21, n: 'ACEITUNA VERDE (V)', r: 'SEGÚN EMPAQUE', p: '7 DÍAS', l: '48 HORAS' },
+      { id: 22, n: 'PIÑA - LATA (N)', r: 'SEGÚN EMPAQUE', p: '15 DÍAS', l: '48 HORAS' },
+      { id: 23, n: 'PEPPERONCINI', r: 'SEGÚN EMPAQUE', p: '15 DÍAS', l: '11:59 P.M.' },
+      { id: 24, n: 'SALSA PIZZA', r: 'SEGÚN EMPAQUE', p: '10 HORAS', l: '10 HORAS' },
+      { id: 25, n: 'BLUE CHEESE CUP', r: 'SEGÚN EMPAQUE', p: 'SEGÚN EMPAQUE', l: 'SEGÚN EMPAQUE' },
+      { id: 26, n: 'RANCH SAUCE CUP', r: 'SEGÚN EMPAQUE', p: 'SEGÚN EMPAQUE', l: 'SEGÚN EMPAQUE' },
+      { id: 27, n: 'SALSA DE AJO CUP', r: 'SEGÚN EMPAQUE', p: 'SEGÚN EMPAQUE', l: '11:59 P.M.' },
+      { id: 28, n: 'SPICY GARLIC CUP', r: 'SEGÚN EMPAQUE', p: 'SEGÚN EMPAQUE', l: '11:59 P.M.' },
+      { id: 29, n: 'SALSA BÚFALO CUP', r: 'SEGÚN EMPAQUE', p: 'SEGÚN EMPAQUE', l: 'SEGÚN EMPAQUE' },
+      { id: 30, n: 'SALSA BBQ CUP', r: 'SEGÚN EMPAQUE', p: 'SEGÚN EMPAQUE', l: 'SEGÚN EMPAQUE' },
+      { id: 31, n: 'SALSA DE AJO (BOTELLA - GRANEL)', r: 'SEGÚN EMPAQUE', p: '21 DÍAS', l: '11:59 P.M.' },
+      { id: 32, n: 'SALSA PARMESANA', r: 'SEGÚN EMPAQUE', p: '21 DÍAS', l: '11:59 P.M.' },
+      { id: 33, n: 'SALSA BBQ (BOLSA)', r: 'SEGÚN EMPAQUE', p: '4 DÍAS', l: '48 HORAS' },
+      { id: 34, n: 'SALSA GOCHUJANG', r: 'SEGÚN EMPAQUE', p: '14 DÍAS', l: '24 HORAS' },
+      { id: 35, n: 'SALSA VERMELO', r: 'SEGÚN EMPAQUE', p: '7 DÍAS', l: '24 HORAS' },
+      { id: 36, n: 'SALSA KOREANA', r: 'SEGÚN EMPAQUE', p: '4 DÍAS', l: '2 DÍAS' },
+      { id: 37, n: 'DUSTINATOR', r: 'SEGÚN EMPAQUE', p: '14 DÍAS', l: '48 HORAS' },
+      { id: 38, n: 'EMPANIZADOR BLANCO', r: 'SEGÚN EMPAQUE', p: '14 DÍAS', l: '48 HORAS' },
+      { id: 39, n: 'MASA DELGADA - IMPORTADA', r: '30 DÍAS', p: '3 DÍAS', l: '3 DÍAS' },
+      { id: 40, n: 'CINAMON SPREED', r: 'SEGÚN EMPAQUE', p: '30 DÍAS', l: '48 HORAS' },
+      { id: 41, n: 'WHITE ICING', r: 'SEGÚN EMPAQUE', p: '30 DÍAS', l: '48 HORAS' },
+      { id: 42, n: 'ORÉGANO Y AJÍ - SACHET', r: 'SEGÚN EMPAQUE', p: 'SEGÚN EMPAQUE', l: 'SEGÚN EMPAQUE' },
+      { id: 43, n: 'ORÉGANO Y AJÍ - GRANEL', r: 'SEGÚN EMPAQUE', p: 'SEGÚN EMPAQUE', l: 'SEGÚN EMPAQUE' },
+      { id: 44, n: 'SAZONADOR ITALIANO', r: 'SEGÚN EMPAQUE', p: '7 DÍAS', l: '3 DÍAS' },
+      { id: 45, n: 'MASA PAN', r: '10 DÍAS', p: '10 DÍAS', l: '10 DÍAS' },
+      { id: 46, n: 'PREPS DE POPPERS PICANTE', r: 'SEGÚN EMPAQUE', p: '24 HORAS', l: '24 HORAS' },
+      { id: 47, n: 'ROLLITOS DE CANELA', r: 'SEGÚN EMPAQUE', p: '6 HORAS', l: '6 HORAS' },
+      { id: 48, n: 'CHICKEN TENDER', r: '7 DÍAS', p: '7 DÍAS', l: '24 HORAS' },
+      { id: 49, n: 'CHORIZO PARRILLERO', r: 'SEGÚN EMPAQUE', p: '6 DÍAS', l: '24 HORAS' },
+      { id: 50, n: 'QUESO CHEDDAR EN TIRAS', r: '60 DÍAS', p: '7 DÍAS', l: '24 HORAS' },
+      { id: 51, n: 'QUESO CHEDDAR RAYADO', r: '60 DÍAS', p: '5 DÍAS', l: '24 HORAS' },
+      { id: 52, n: 'SALSA DE QUESO CHEDDAR', r: '90 DÍAS', p: '5 DÍAS', l: '24 HORAS' },
+      { id: 53, n: 'JALAPEÑOS', r: 'SEGÚN EMPAQUE', p: '60 DÍAS', l: '11:59 P.M.' },
+      { id: 54, n: 'PIÑA - BOLSA', r: 'SEGÚN EMPAQUE', p: '15 DÍAS', l: '48 HORAS' },
+      { id: 55, n: 'BANANA PEPPERS', r: 'SEGÚN EMPAQUE', p: '15 DÍAS', l: '11:59 P.M.' },
+      { id: 56, n: 'SALSA DE MAYONESA CON AJÍ LIMO', r: 'SEGÚN EMPAQUE', p: '7 DÍAS', l: '11:59 P.M.' },
+      { id: 57, n: 'SALSA ROSADA (1KG)', r: 'SEGÚN EMPAQUE', p: '7 DÍAS', l: '11:59 P.M.' },
+      { id: 58, n: 'SALSA ROSADA (0.5KG)', r: 'SEGÚN EMPAQUE', p: '7 DÍAS', l: '11:59 P.M.' },
+      { id: 59, n: 'SALSA PARRILLERA', r: 'SEGÚN EMPAQUE', p: '3 DÍAS', l: '11:59 P.M.' },
+      { id: 60, n: 'SALSA DE MANGO HABANERO', r: 'SEGÚN EMPAQUE', p: '7 DÍAS', l: '11:59 P.M.' },
+      { id: 61, n: 'SALSA RANCH', r: 'SEGÚN EMPAQUE', p: '7 DÍAS', l: '11:59 P.M.' },
+      { id: 62, n: 'SALSA BECHAMEL', r: 'SEGÚN EMPAQUE', p: '7 DÍAS', l: '11:59 P.M.' },
+      { id: 63, n: 'SALSA CHIMICHURRI', r: 'SEGÚN EMPAQUE', p: '15 DÍAS', l: '48 HORAS' },
+      { id: 64, n: 'SALSA DE MIEL PICANTE', r: 'SEGÚN EMPAQUE', p: '7 DÍAS', l: '11:59 P.M.' },
+      { id: 65, n: 'MASA CROISANT', r: '5 DÍAS', p: '11:59 P.M.', l: '11:59 P.M.' },
+      { id: 66, n: 'PASTA DE LASAGNA', r: '10 DÍAS', p: '8 DÍAS', l: '8 DÍAS' },
+      { id: 67, n: 'TORTILLA', r: 'SEGÚN EMPAQUE', p: '7 DÍAS', l: '11:59 P.M.' },
+      { id: 68, n: 'MANJAR BLANCO', r: 'SEGÚN EMPAQUE', p: '15 DÍAS', l: '5 DÍAS' },
+      { id: 69, n: 'AZÚCAR IMPALPABLE', r: 'SEGÚN EMPAQUE', p: '30 DÍAS', l: '5 DÍAS' },
+      { id: 70, n: 'ACEITE', r: 'SEGÚN EMPAQUE', p: 'SEGÚN EMPAQUE', l: 'SEGÚN EMPAQUE' },
+      { id: 71, n: 'SAL', r: 'SEGÚN EMPAQUE', p: 'SEGÚN EMPAQUE', l: 'SEGÚN EMPAQUE' },
+      { id: 72, n: 'PASTA RIGATONI', r: 'SEGÚN EMPAQUE', p: 'SEGÚN EMPAQUE', l: 'SEGÚN EMPAQUE' },
+      { id: 73, n: 'LASAGNA (ALL THE MEATS/THE WORKS/AMERICANA)', r: 'SEGÚN EMPAQUE', p: '4 DÍAS', l: '11:59 P.M.' },
+      { id: 74, n: 'ROLLITOS DE PEPPERONI/JAMÓN', r: 'SEGÚN EMPAQUE', p: '6 HORAS', l: '6 HORAS' },
+      { id: 75, n: 'ROLLITOS DE MANJAR', r: 'SEGÚN EMPAQUE', p: '6 HORAS', l: '6 HORAS' },
+      { id: 76, n: 'PASTA CHICKEN', r: 'SEGÚN EMPAQUE', p: '48 HORAS', l: '48 HORAS' },
+      { id: 77, n: 'PASTA BOLOGNESA', r: 'SEGÚN EMPAQUE', p: '48 HORAS', l: '48 HORAS' },
+    ];
+
+    // Última tabla descargada del repositorio (se usa sin conexión). Si no hay, se usa la lista integrada.
+    const TABLA_CACHE = "tabla_cache_v1";
+    function leerCacheTabla() { try { return JSON.parse(localStorage.getItem(TABLA_CACHE)); } catch (e) { return null; } }
+    let tablaCache = leerCacheTabla();
+    let productos = (tablaCache && Array.isArray(tablaCache.productos) && tablaCache.productos.length)
+      ? tablaCache.productos
+      : JSON.parse(JSON.stringify(productosDefault));
+
+    let actual = null;
+    let vencRecib = null;
+    let vencRecibManual = null;
+    let vencRecibCalculado = null;
+    let vencPrep = null;
+    const REGLAS_DEF = {
+      recib_inicio: 'DIA_1', prep_inicio: 'DIA_SIGUIENTE', linea_inicio: 'DIA_1',
+      moz_recib: 'DIA_1', moz_prep: 'DIA_1', moz_linea: 'DIA_1',
+      respetar_tope: 'SI', hora_cierre: '11:59 P.M.',
+    };
+    // Reglas guardadas se mezclan con las de fábrica (si falta alguna, se usa la de fábrica)
+    let reglas = Object.assign({}, REGLAS_DEF, (tablaCache && tablaCache.reglas) || {});
+
+    // Quita tildes y pasa a mayúsculas (búsquedas y reglas)
+    function norm(s) { return String(s || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+
+    // Reconocen la unidad aunque falte la tilde o esté en singular: "7 DIAS", "7 dias", "1 HORA", "11:59 PM"
+    function esDias(t) { return /\d\s*DIAS?\b/.test(norm(t)); }
+    function esHoras(t) { return /\d\s*HORAS?\b/.test(norm(t)); }
+    function esCierre(t) { return /\d:\d\d\s*P\.?\s*M\b/.test(norm(t)); }
+
+    // Lee una regla tolerando mayúsculas/minúsculas, tildes, espacios o guiones; si no se entiende, usa la de fábrica
+    function rg(k) {
+      const def = REGLAS_DEF[k];
+      const v = reglas[k];
+      if (v === undefined || v === null || String(v).trim() === '') return def;
+      if (k === 'hora_cierre') return String(v).trim();
+      const t = norm(v).trim().replace(/[\s-]+/g, '_');
+      if (k === 'respetar_tope') {
+        if (['SI', 'S', 'YES', 'Y', 'TRUE', '1'].includes(t)) return 'SI';
+        if (['NO', 'N', 'FALSE', '0'].includes(t)) return 'NO';
+        return def;
+      }
+      if (/SIG/.test(t)) return 'DIA_SIGUIENTE';
+      if (/^DIA_?1$|^1$/.test(t)) return 'DIA_1';
+      return def;
+    }
+
+    // Hora de cierre de tienda (regla hora_cierre). Si no se entiende, 11:59 P.M.
+    function cierre() {
+      const v = String(rg('hora_cierre')).toUpperCase().replace(/\s+/g, ' ').trim();
+      let h, mi, m = v.match(/^(\d{1,2}):(\d{2})\s*([AP])\.?\s*M\.?$/);
+      if (m) {
+        h = parseInt(m[1]); mi = parseInt(m[2]);
+        if (m[3] === 'P' && h !== 12) h += 12;
+        if (m[3] === 'A' && h === 12) h = 0;
+      } else {
+        m = v.match(/^(\d{1,2}):(\d{2})$/);
+        if (m) { h = parseInt(m[1]); mi = parseInt(m[2]); }
+      }
+      if (h === undefined || isNaN(h) || isNaN(mi) || h > 23 || mi > 59) { h = 23; mi = 59; }
+      return { h, mi, txt: hora12(String(h).padStart(2, '0') + ':' + String(mi).padStart(2, '0')) };
+    }
+
+    const MAX_HIST = 30;
+    let historial = JSON.parse(localStorage.getItem("historial_fechados_v6")) || [];
+    // Entradas antiguas guardadas por el masivo tenían otros datos en recib/prep/linea: se normalizan
+    historial.forEach(e => {
+      if (e && !('prepVenc' in e) && !('recibVenc' in e)) {
+        e.recibVenc = e.recib || null;
+        e.recib = e.recibDate ? vertical(e.recibDate) : null;
+        e.prepVenc = e.prep || null;
+        e.prep = e.prepDate ? vertical(e.prepDate) : null;
+        e.lineaVenc = e.linea || null;
+        e.linea = e.lineaDate ? vertical(e.lineaDate) : null;
+      }
+    });
+    let favoritos = JSON.parse(localStorage.getItem("favoritos_fechados_v6")) || [];
+
+    // ===== MASIVO =====
+    let cesta = []; // {id, nombre, recib, recibVenc, prep, prepHora, linea, lineaHora}
+    let masivoResultadosData = [];
+
+    // ===== PICKER =====
+    let hpTipo = null;
+    let fhDia = 17, fhMes = 6, fhAnio = 2026;
+    let hpHora = 12, hpMin = 0, hpAmpm = 'AM';
+    const fhMeses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+    const fhDiasSem = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+    // ===== TABS =====
+    function cambiarModo(modo) {
+      document.getElementById('tabIndividual').classList.toggle('active', modo === 'individual');
+      document.getElementById('tabMasivo').classList.toggle('active', modo === 'masivo');
+      document.getElementById('modoIndividual').style.display = modo === 'individual' ? 'flex' : 'none';
+      document.getElementById('modoMasivo').style.display = modo === 'masivo' ? 'flex' : 'none';
+    }
+
+    // ===== PICKER =====
+    function abrirFechaHoraPicker(tipo) {
+      if (!actual && !tipo.startsWith('masivo')) { alert("Primero selecciona un producto"); return; }
+      hpTipo = tipo;
+      const horaSection = document.getElementById('horaSection');
+      const pickerTitle = document.getElementById('horaPickerTitle');
+      if (tipo === 'recib' || tipo === 'recibVenc') { 
+        horaSection.style.display = 'none'; 
+        pickerTitle.innerText = tipo === 'recib' ? 'SELECCIONAR FECHA RECIBIDO' : 'SELECCIONAR VENCIMIENTO EMPAQUE'; 
+      }
+      else { 
+        horaSection.style.display = 'flex'; 
+        pickerTitle.innerText = 'SELECCIONAR FECHA Y HORA'; 
+      }
+      cargarValoresPicker(tipo);
+      document.getElementById('horaPickerOverlay').style.display = 'flex';
+    }
+
+    function cargarValoresPicker(tipo) {
+      let fechaTxt = null;
+      if (tipo === 'recib') fechaTxt = document.getElementById('recibFecha').innerText;
+      else if (tipo === 'recibVenc') fechaTxt = document.getElementById('recibVenc').innerText;
+      else if (tipo === 'prep') fechaTxt = document.getElementById('prepFecha').innerText;
+      else if (tipo === 'linea') fechaTxt = document.getElementById('lineaFecha').innerText;
+
+      if (fechaTxt && fechaTxt !== '--') {
+        const partes = fechaTxt.split('\n');
+        fhDia = parseInt(partes[0]); fhMes = parseInt(partes[1]) - 1; fhAnio = 2000 + parseInt(partes[2]);
+      } else {
+        const hoy = new Date();
+        fhDia = hoy.getDate(); fhMes = hoy.getMonth(); fhAnio = hoy.getFullYear();
+      }
+      if (tipo !== 'recib' && tipo !== 'recibVenc') {
+        let horaTxt = null;
+        if (tipo === 'prep') horaTxt = document.getElementById('prepHoraTxt').innerText;
+        else if (tipo === 'linea') horaTxt = document.getElementById('lineaHoraTxt').innerText;
+        if (horaTxt && horaTxt !== '--') {
+          const match = horaTxt.match(/(\d+):(\d+)\s*(A\.M\.|P\.M\.)/);
+          if (match) { hpHora = parseInt(match[1]); hpMin = parseInt(match[2]); hpAmpm = match[3].replace(/\./g, ''); }
+        } else {
+          const now = new Date();
+          hpHora = now.getHours(); hpMin = now.getMinutes() >= 30 ? 30 : 0;
+          hpAmpm = hpHora >= 12 ? 'PM' : 'AM';
+          if (hpHora > 12) hpHora -= 12;
+          if (hpHora === 0) hpHora = 12;
+        }
+        hpActualizarUI();
+      }
+      fhActualizarUI();
+    }
+
+    function cerrarHoraPicker() {
+      document.getElementById('horaPickerOverlay').style.display = 'none';
+      hpTipo = null;
+      // Limpiar variables de masivo si se cancela
+      editandoMasivoId = null;
+      editandoMasivoCampo = null;
+    }
+
+    function fhCambiarDia(delta) {
+      const maxDias = new Date(fhAnio, fhMes + 1, 0).getDate();
+      fhDia += delta;
+      if (fhDia > maxDias) fhDia = 1;
+      if (fhDia < 1) fhDia = maxDias;
+      fhActualizarUI();
+    }
+    function fhCambiarMes(delta) {
+      fhMes += delta;
+      if (fhMes > 11) { fhMes = 0; fhAnio++; }
+      if (fhMes < 0) { fhMes = 11; fhAnio--; }
+      const maxDias = new Date(fhAnio, fhMes + 1, 0).getDate();
+      if (fhDia > maxDias) fhDia = maxDias;
+      fhActualizarUI();
+    }
+    function fhCambiarAnio(delta) {
+      fhAnio += delta;
+      if (fhAnio > 2035) fhAnio = 2025;
+      if (fhAnio < 2025) fhAnio = 2035;
+      fhActualizarUI();
+    }
+    function fhActualizarUI() {
+      document.getElementById('fhDiaVal').innerText = String(fhDia).padStart(2, '0');
+      document.getElementById('fhMesVal').innerText = String(fhMes + 1).padStart(2, '0');
+      document.getElementById('fhAnioVal').innerText = String(fhAnio).slice(2);
+      document.getElementById('fhMesNom').innerText = fhMeses[fhMes];
+      document.getElementById('fhDiaNom').innerText = fhDiasSem[new Date(fhAnio, fhMes, fhDia).getDay()];
+    }
+    function hpCambiarHora(delta) { hpHora += delta; if (hpHora > 12) hpHora = 1; if (hpHora < 1) hpHora = 12; hpActualizarUI(); }
+    function hpCambiarMin(delta) { hpMin = hpMin === 0 ? 30 : 0; hpActualizarUI(); }
+    function hpCambiarAmpm() { hpAmpm = hpAmpm === 'AM' ? 'PM' : 'AM'; hpActualizarUI(); }
+    function hpActualizarUI() {
+      document.getElementById('hpHoraVal').innerText = String(hpHora).padStart(2, '0');
+      document.getElementById('hpMinVal').innerText = String(hpMin).padStart(2, '0');
+      document.getElementById('hpAmpmVal').innerText = hpAmpm;
+    }
+
+    function confirmarFechaHoraPicker() {
+      const fechaStr = `${fhAnio}-${String(fhMes + 1).padStart(2, '0')}-${String(fhDia).padStart(2, '0')}`;
+
+      // ===== EDICIÓN EN MASIVO (desde modal de producto) =====
+      if (editandoMasivoId && editandoMasivoCampo) {
+        const c = cesta.find(x => x.id === editandoMasivoId);
+        if (c) {
+          if (editandoMasivoCampo === 'recib') { c.recib = fechaStr; }
+          else if (editandoMasivoCampo === 'recibVenc') { c.recibVenc = fechaStr; }
+          else if (editandoMasivoCampo === 'prep') {
+            let h24 = hpHora;
+            if (hpAmpm === 'PM' && hpHora !== 12) h24 += 12;
+            if (hpAmpm === 'AM' && hpHora === 12) h24 = 0;
+            c.prep = fechaStr; c.prepHora = String(h24).padStart(2, '0') + ':' + String(hpMin).padStart(2, '0');
+          }
+          else if (editandoMasivoCampo === 'linea') {
+            let h24 = hpHora;
+            if (hpAmpm === 'PM' && hpHora !== 12) h24 += 12;
+            if (hpAmpm === 'AM' && hpHora === 12) h24 = 0;
+            c.linea = fechaStr; c.lineaHora = String(h24).padStart(2, '0') + ':' + String(hpMin).padStart(2, '0');
+          }
+          renderCesta();
+        }
+        // Limpiar variables de edición masiva DESPUÉS de guardar
+        editandoMasivoId = null;
+        editandoMasivoCampo = null;
+        cerrarHoraPicker();
+        return;
+      }
+
+      // ===== MODO INDIVIDUAL =====
+      if (!hpTipo) return;
+
+      if (hpTipo === 'recibVenc') {
+        vencRecibManual = new Date(fechaStr + 'T23:59');
+        vencRecib = vencRecibManual;
+        document.getElementById('recibVenc').innerText = vertical(fechaStr);
+        document.getElementById('recibVenc').classList.add('venc-manual');
+        document.getElementById('recibVencManualBadge').style.display = 'block';
+        document.getElementById('recibVencDate').value = fechaStr;
+        recalcularTodo();
+        cerrarHoraPicker();
+        return;
+      }
+
+      document.getElementById(hpTipo + 'Fecha').innerText = vertical(fechaStr);
+      document.getElementById(hpTipo + 'Date').value = fechaStr;
+      if (hpTipo === 'recib') { recalcularTodo(); }
+      else {
+        let h24 = hpHora;
+        if (hpAmpm === 'PM' && hpHora !== 12) h24 += 12;
+        if (hpAmpm === 'AM' && hpHora === 12) h24 = 0;
+        const horaStr = String(h24).padStart(2, '0') + ':' + String(hpMin).padStart(2, '0');
+        document.getElementById(hpTipo + 'HoraTxt').innerText = hora12(horaStr);
+        recalcularTodo();
+      }
+      cerrarHoraPicker();
+    }
+
+    // ===== BÚSQUEDA INDIVIDUAL =====
+    function buscar(v) {
+      const s = document.getElementById('suggestions');
+      const clearBtn = document.getElementById('clearSearch');
+      if (clearBtn) clearBtn.style.display = v.length > 0 ? 'flex' : 'none';
+      if (v.length < 1) { s.style.display = 'none'; return; }
+      let r = productos.filter((x) => norm(x.n).includes(norm(v)));
+      s.innerHTML = r.map((x) => `<div class="sug" onclick="seleccionar(${x.id})">${x.n}</div>`).join('');
+      s.style.display = 'block';
+    }
+
+    function seleccionar(id) {
+      if (actual) {
+        const recibF = document.getElementById('recibFecha').innerText;
+        const prepF = document.getElementById('prepFecha').innerText;
+        const lineaF = document.getElementById('lineaFecha').innerText;
+        if (recibF !== '--' || prepF !== '--' || lineaF !== '--') guardarHistorial();
+      }
+      actual = productos.find((x) => x.id === id);
+      document.getElementById('search').value = actual.n;
+      document.getElementById('suggestions').style.display = 'none';
+      document.getElementById('rTop').innerText = actual.r;
+      document.getElementById('pTop').innerText = actual.p;
+      document.getElementById('lTop').innerText = actual.l;
+      limpiar();
+      renderFavoritos();
+    }
+
+    function limpiarBusqueda() {
+      if (actual) {
+        const recibF = document.getElementById('recibFecha').innerText;
+        const prepF = document.getElementById('prepFecha').innerText;
+        const lineaF = document.getElementById('lineaFecha').innerText;
+        if (recibF !== '--' || prepF !== '--' || lineaF !== '--') guardarHistorial();
+      }
+      document.getElementById('search').value = '';
+      document.getElementById('suggestions').style.display = 'none';
+      document.getElementById('clearSearch').style.display = 'none';
+      actual = null;
+      document.getElementById('rTop').innerText = '--';
+      document.getElementById('pTop').innerText = '--';
+      document.getElementById('lTop').innerText = '--';
+      limpiar();
+      renderFavoritos();
+    }
+
+    function limpiar() {
+      vencRecib = null;
+      vencRecibManual = null;
+      vencRecibCalculado = null;
+      vencPrep = null;
+      ['recib', 'prep', 'linea'].forEach((x) => {
+        if (document.getElementById(x + 'Fecha')) document.getElementById(x + 'Fecha').innerText = '--';
+        if (document.getElementById(x + 'Venc')) {
+          document.getElementById(x + 'Venc').innerText = '--';
+          document.getElementById(x + 'Venc').classList.remove('venc-manual');
+        }
+        if (document.getElementById(x + 'HoraTxt')) document.getElementById(x + 'HoraTxt').innerText = '--';
+        if (document.getElementById(x + 'HoraVenc')) document.getElementById(x + 'HoraVenc').innerText = '--';
+      });
+      document.getElementById('recibVencManualBadge').style.display = 'none';
+      document.getElementById('recibDate').value = '';
+      document.getElementById('recibVencDate').value = '';
+      document.getElementById('prepDate').value = '';
+      document.getElementById('lineaDate').value = '';
+    }
+
+    function vertical(v) {
+      const p = v.split('-');
+      return `${p[2]}\n${p[1]}\n${p[0].slice(2)}`;
+    }
+
+    function hora12(hora) {
+      if (!hora || hora === '--') return '--';
+      let [h, m] = hora.split(':');
+      h = parseInt(h);
+      let suf = h >= 12 ? 'P.M.' : 'A.M.';
+      if (h > 12) h -= 12;
+      if (h === 0) h = 12;
+      return `${h}:${m} ${suf}`;
+    }
+
+    function horaTo24(hora12str) {
+      if (!hora12str || hora12str === '--') return '00:00';
+      const match = hora12str.match(/(\d+):(\d+)\s*(A\.M\.|P\.M\.)/);
+      if (!match) return '00:00';
+      let h = parseInt(match[1]);
+      let m = match[2];
+      let ampm = match[3].replace(/\./g, '');
+      if (ampm === 'PM' && h !== 12) h += 12;
+      if (ampm === 'AM' && h === 12) h = 0;
+      return `${String(h).padStart(2, '0')}:${m}`;
+    }
+
+    // ===== CÁLCULOS =====
+    function calcularRecib(fecha) {
+      if (!actual) return;
+      vencPrep = null;
+      vencRecibCalculado = null;
+
+      if (esDias(actual.r)) {
+        let dias = parseInt(actual.r);
+        let f = new Date(fecha + 'T00:00');
+        let inicioRecib = actual.n.includes('MOZZARELLA') ? rg('moz_recib') : rg('recib_inicio');
+        f.setDate(f.getDate() + (inicioRecib === 'DIA_1' ? dias - 1 : dias));
+        f.setHours(23, 59, 0, 0);
+        vencRecibCalculado = f;
+        if (!vencRecibManual) {
+          vencRecib = new Date(f);
+          mostrarVenc('recib', f);
+        }
+      }
+    }
+
+    function calcular(tipo, fecha, hora) {
+      if (!actual) return;
+      let regla = tipo === 'prep' ? actual.p : actual.l;
+      let f = new Date(fecha + 'T' + hora);
+
+      // SEGÚN EMPAQUE: vence cuando vence el empaque (o el prep, si ya se calculó)
+      if (/SEGUN EMPAQUE/.test(norm(regla))) {
+        const base = tipo === 'prep' ? vencRecib : (vencPrep || vencRecib);
+        if (!base) {
+          document.getElementById(tipo + 'Venc').innerText = '--';
+          document.getElementById(tipo + 'HoraVenc').innerText = '--';
+          if (tipo === 'prep') vencPrep = null;
+          return;
+        }
+        f = new Date(base);
+        mostrarVenc(tipo, f);
+        document.getElementById(tipo + 'HoraVenc').innerText = hora12(`${String(f.getHours()).padStart(2, '0')}:${String(f.getMinutes()).padStart(2, '0')}`);
+        if (tipo === 'prep') vencPrep = new Date(f);
+        return;
+      }
+
+      if (esDias(regla)) {
+        let dias = parseInt(regla);
+        let inicio = tipo === 'prep'
+          ? (actual.n.includes('MOZZARELLA') ? rg('moz_prep') : rg('prep_inicio'))
+          : (actual.n.includes('MOZZARELLA') ? rg('moz_linea') : rg('linea_inicio'));
+        f.setDate(f.getDate() + (inicio === 'DIA_SIGUIENTE' || (tipo === 'linea' && inicio !== 'DIA_1') ? dias : dias - 1));
+      }
+      if (esHoras(regla)) f.setHours(f.getHours() + parseInt(regla));
+      if (esCierre(regla)) { const c = cierre(); f.setHours(c.h, c.mi, 0, 0); }
+
+      let fueLimitadoPorRecib = false;
+      let fueLimitadoPorPrep = false;
+
+      if (rg('respetar_tope') === 'SI') {
+        if (tipo === 'prep' && vencRecib && f > vencRecib) {
+          f = new Date(vencRecib);
+          fueLimitadoPorRecib = true;
+        }
+        if (tipo === 'linea') {
+          if (vencPrep && f > vencPrep) {
+            f = new Date(vencPrep);
+            fueLimitadoPorPrep = true;
+          }
+          if (vencRecib && f > vencRecib) {
+            f = new Date(vencRecib);
+            fueLimitadoPorRecib = true;
+          }
+        }
+      }
+
+      if ((fueLimitadoPorRecib || fueLimitadoPorPrep) && f.getHours() === 0 && f.getMinutes() === 0) {
+        f.setHours(23, 59, 0, 0);
+      }
+
+      mostrarVenc(tipo, f);
+      document.getElementById(tipo + 'HoraVenc').innerText = esCierre(regla)
+        ? cierre().txt
+        : hora12(`${String(f.getHours()).padStart(2, '0')}:${String(f.getMinutes()).padStart(2, '0')}`);
+
+      if (tipo === 'prep') {
+        vencPrep = new Date(f);
+      }
+    }
+
+    function mostrarVenc(tipo, f) {
+      document.getElementById(tipo + 'Venc').innerText =
+        `${String(f.getDate()).padStart(2, '0')}\n${String(f.getMonth() + 1).padStart(2, '0')}\n${String(f.getFullYear()).slice(2)}`;
+    }
+
+    function recalcularTodo() {
+      const recibDate = document.getElementById('recibDate').value;
+      if (recibDate) {
+        calcularRecib(recibDate);
+      }
+      const prepDate = document.getElementById('prepDate').value;
+      const prepHora = document.getElementById('prepHoraTxt').innerText;
+      if (prepDate && prepHora !== '--') calcular('prep', prepDate, horaTo24(prepHora));
+      const lineaDate = document.getElementById('lineaDate').value;
+      const lineaHora = document.getElementById('lineaHoraTxt').innerText;
+      if (lineaDate && lineaHora !== '--') calcular('linea', lineaDate, horaTo24(lineaHora));
+    }
+
+    // ===== HISTORIAL =====
+    function guardarHistorial() {
+      if (!actual) return;
+      const recibF = document.getElementById('recibFecha').innerText;
+      const prepF = document.getElementById('prepFecha').innerText;
+      const lineaF = document.getElementById('lineaFecha').innerText;
+      if (recibF === '--' && prepF === '--' && lineaF === '--') return;
+      const entry = {
+        id: actual.id, producto: actual.n,
+        recibDate: document.getElementById('recibDate').value || null,
+        recibVencDate: document.getElementById('recibVencDate').value || null,
+        recibVencManual: vencRecibManual ? true : false,
+        prepDate: document.getElementById('prepDate').value || null,
+        lineaDate: document.getElementById('lineaDate').value || null,
+        prepHora: document.getElementById('prepHoraTxt').innerText !== '--' ? horaTo24(document.getElementById('prepHoraTxt').innerText) : null,
+        lineaHora: document.getElementById('lineaHoraTxt').innerText !== '--' ? horaTo24(document.getElementById('lineaHoraTxt').innerText) : null,
+        recib: recibF !== '--' ? recibF : null,
+        recibVenc: document.getElementById('recibVenc').innerText !== '--' ? document.getElementById('recibVenc').innerText : null,
+        prep: prepF !== '--' ? prepF : null,
+        prepVenc: document.getElementById('prepVenc').innerText !== '--' ? document.getElementById('prepVenc').innerText : null,
+        prepHoraVenc: document.getElementById('prepHoraVenc').innerText !== '--' ? document.getElementById('prepHoraVenc').innerText : null,
+        linea: lineaF !== '--' ? lineaF : null,
+        lineaVenc: document.getElementById('lineaVenc').innerText !== '--' ? document.getElementById('lineaVenc').innerText : null,
+        lineaHoraVenc: document.getElementById('lineaHoraVenc').innerText !== '--' ? document.getElementById('lineaHoraVenc').innerText : null,
+      };
+      historial.unshift(entry);
+      while (historial.length > MAX_HIST) historial.pop();
+      localStorage.setItem("historial_fechados_v6", JSON.stringify(historial));
+      renderHistorial();
+    }
+
+    function renderHistorial() {
+      const box = document.getElementById('historialBox');
+      const lista = document.getElementById('historialLista');
+      const filtro = document.getElementById('histFilter')?.value?.toUpperCase() || '';
+      let h = historial;
+      if (filtro) h = historial.filter(x => norm(x.producto).includes(norm(filtro)) || (x.recib && x.recib.replace(/\n/g, '/').includes(filtro)));
+      if (h.length === 0) { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      lista.innerHTML = h.map((x, idx) => {
+        const parts = [];
+        if (x.recibVenc) parts.push('R:' + x.recibVenc.replace(/\n/g, '/') + (x.recibVencManual ? '📦' : ''));
+        if (x.prep) parts.push('P:' + x.prep.replace(/\n/g, '/'));
+        if (x.linea) parts.push('L:' + x.linea.replace(/\n/g, '/'));
+        return `<div class="hist-item" onclick="cargarDesdeHistorial(${historial.indexOf(x)})"><span class="hist-icon">↩️</span><span class="hist-name">${x.producto}</span><span class="hist-dates">${parts.join(' ')}</span></div>`;
+      }).join('');
+    }
+
+    function filtrarHistorial(v) { renderHistorial(); }
+
+    function cargarDesdeHistorial(idx) {
+      const h = historial[idx];
+      if (!h) return;
+      const prod = productos.find(p => p.n === h.producto) || productos.find(p => p.id === h.id);
+      if (!prod) { alert('Producto no encontrado.'); return; }
+      if (actual) {
+        const recibF = document.getElementById('recibFecha').innerText;
+        const prepF = document.getElementById('prepFecha').innerText;
+        const lineaF = document.getElementById('lineaFecha').innerText;
+        if (recibF !== '--' || prepF !== '--' || lineaF !== '--') guardarHistorial();
+      }
+      actual = prod;
+      document.getElementById('search').value = actual.n;
+      document.getElementById('suggestions').style.display = 'none';
+      document.getElementById('rTop').innerText = actual.r;
+      document.getElementById('pTop').innerText = actual.p;
+      document.getElementById('lTop').innerText = actual.l;
+      limpiar();
+      renderFavoritos();
+      if (h.recibDate) {
+        document.getElementById('recibDate').value = h.recibDate;
+        document.getElementById('recibFecha').innerText = h.recib;
+      }
+      if (h.recibVencDate) {
+        document.getElementById('recibVencDate').value = h.recibVencDate;
+        document.getElementById('recibVenc').innerText = h.recibVenc;
+        if (h.recibVencManual) {
+          document.getElementById('recibVenc').classList.add('venc-manual');
+          document.getElementById('recibVencManualBadge').style.display = 'block';
+          vencRecibManual = new Date(h.recibVencDate + 'T23:59');
+          vencRecib = vencRecibManual;
+        } else {
+          vencRecib = new Date(h.recibVencDate + 'T23:59');
+        }
+      }
+      if (h.prepDate) {
+        document.getElementById('prepDate').value = h.prepDate;
+        document.getElementById('prepFecha').innerText = h.prep;
+        if (h.prepHora) { 
+          document.getElementById('prepHoraTxt').innerText = hora12(h.prepHora); 
+          calcular('prep', h.prepDate, h.prepHora); 
+        }
+      }
+      if (h.lineaDate) {
+        document.getElementById('lineaDate').value = h.lineaDate;
+        document.getElementById('lineaFecha').innerText = h.linea;
+        if (h.lineaHora) { 
+          document.getElementById('lineaHoraTxt').innerText = hora12(h.lineaHora); 
+          calcular('linea', h.lineaDate, h.lineaHora); 
+        }
+      }
+      const pos = historial.indexOf(h);
+      if (pos >= 0) historial.splice(pos, 1);
+      historial.unshift(h);
+      localStorage.setItem("historial_fechados_v6", JSON.stringify(historial));
+      renderHistorial();
+      cambiarModo('individual');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function limpiarHistorial() { 
+      historial = []; 
+      localStorage.removeItem("historial_fechados_v6"); 
+      renderHistorial(); 
+    }
+
+    // ===== FAVORITOS =====
+    function toggleFavorito(id) {
+      const idx = favoritos.indexOf(id);
+      if (idx >= 0) favoritos.splice(idx, 1);
+      else favoritos.push(id);
+      localStorage.setItem("favoritos_fechados_v6", JSON.stringify(favoritos));
+      renderFavoritos();
+    }
+    function renderFavoritos() {
+      const box = document.getElementById('favoritosBox');
+      const grid = document.getElementById('favGrid');
+      if (favoritos.length === 0 && !actual) { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      let html = '';
+      favoritos.slice(0, 8).forEach(fid => {
+        const p = productos.find(x => x.id === fid);
+        if (!p) return;
+        html += `<div class="fav-item" onclick="seleccionar(${p.id})">${p.n.substring(0, 18)}${p.n.length > 18 ? '..' : ''}<span class="fav-star">⭐</span></div>`;
+      });
+      if (actual) {
+        const esFav = favoritos.includes(actual.id);
+        html += `<div class="fav-add" onclick="toggleFavorito(${actual.id})">${esFav ? '−' : '+'}</div>`;
+      } else { html += `<div class="fav-add">+</div>`; }
+      grid.innerHTML = html;
+    }
+
+    // ===== MASIVO - BUSCAR Y AGREGAR A CESTA =====
+    function buscarMasivo(v) {
+      const s = document.getElementById('masivoSug');
+      if (v.length < 1) { s.style.display = 'none'; return; }
+      let r = productos.filter((x) => norm(x.n).includes(norm(v)) && !cesta.find(c => c.id === x.id));
+      s.innerHTML = r.map((x) => `<div class="masivo-sug-item" onclick="agregarACesta(${x.id}, '${x.n.replace(/'/g, "\\'")}')">${x.n}</div>`).join('');
+      s.style.display = 'block';
+    }
+
+    function agregarACesta(id, nombre) {
+      cesta.push({ id, nombre, recib: null, recibVenc: null, prep: null, prepHora: null, linea: null, lineaHora: null });
+      document.getElementById('masivoSearch').value = '';
+      document.getElementById('masivoSug').style.display = 'none';
+      renderCesta();
+    }
+
+    function quitarDeCesta(id) {
+      cesta = cesta.filter(c => c.id !== id);
+      renderCesta();
+    }
+
+    function renderCesta() {
+      const box = document.getElementById('cestaBox');
+      const lista = document.getElementById('cestaLista');
+      const count = document.getElementById('cestaCount');
+      count.innerText = cesta.length + ' producto(s) en cesta';
+      if (cesta.length === 0) { box.style.display = 'none'; return; }
+      box.style.display = 'block';
+      lista.innerHTML = cesta.map(c => {
+        let badgesHtml = '<div class="cesta-badges">';
+        if (c.recib) badgesHtml += '<span class="cesta-badge badge-recib">RECIB</span>';
+        if (c.recibVenc) badgesHtml += '<span class="cesta-badge badge-recibVenc">EMP</span>';
+        if (c.prep) badgesHtml += '<span class="cesta-badge badge-prep">PREP</span>';
+        if (c.linea) badgesHtml += '<span class="cesta-badge badge-linea">LINEA</span>';
+        badgesHtml += '</div>';
+        return `<div class="cesta-item" onclick="abrirEditarMasivo(${c.id})">
+          <div>
+            <div>${c.nombre}</div>
+            ${badgesHtml}
+          </div>
+          <span class="cesta-remove" onclick="event.stopPropagation();quitarDeCesta(${c.id})">✕</span>
+        </div>`;
+      }).join('');
+    }
+
+    function limpiarMasivo() {
+      cesta = [];
+      masivoResultadosData = [];
+      renderCesta();
+      document.getElementById('masivoResultados').style.display = 'none';
+    }
+
+    // ===== EDICIÓN INDIVIDUAL EN MASIVO =====
+    let editandoMasivoId = null;
+    let editandoMasivoCampo = null;
+
+    function abrirEditarMasivo(id) {
+      editandoMasivoId = id;
+      const c = cesta.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('editarMasivoNombre').innerText = c.nombre;
+
+      // Mostrar fechas actuales
+      let fechasHtml = '';
+      if (c.recib) fechasHtml += `📅 RECIB: ${c.recib}<br>`;
+      if (c.recibVenc) fechasHtml += `📦 VENC. EMPAQUE: ${c.recibVenc}<br>`;
+      if (c.prep) fechasHtml += `🔓 PREP: ${c.prep} ${hora12(c.prepHora)}<br>`;
+      if (c.linea) fechasHtml += `📍 LINEA: ${c.linea} ${hora12(c.lineaHora)}<br>`;
+      if (!fechasHtml) fechasHtml = '<em style="color:#999;">Ninguna fecha establecida</em>';
+      document.getElementById('editarMasivoFechasActuales').innerHTML = fechasHtml;
+
+      document.getElementById('editarMasivoOverlay').style.display = 'flex';
+    }
+
+    function cerrarEditarMasivo() {
+      document.getElementById('editarMasivoOverlay').style.display = 'none';
+      // No limpiamos editandoMasivoId ni editandoMasivoCampo aquí
+      // Se limpiarán después de confirmarFechaHoraPicker o al cancelar
+    }
+
+    function editarMasivoCampo(campo) {
+      if (!editandoMasivoId) return;
+      const c = cesta.find(x => x.id === editandoMasivoId);
+      if (!c) return;
+
+      editandoMasivoCampo = campo;
+
+      const horaSection = document.getElementById('horaSection');
+      const pickerTitle = document.getElementById('horaPickerTitle');
+      if (campo === 'recib' || campo === 'recibVenc') {
+        horaSection.style.display = 'none';
+        pickerTitle.innerText = (campo === 'recib' ? 'FECHA RECIB - ' : 'VENC. EMPAQUE - ') + c.nombre.substring(0, 20);
+      } else {
+        horaSection.style.display = 'flex';
+        pickerTitle.innerText = 'FECHA/HORA ' + campo.toUpperCase() + ' - ' + c.nombre.substring(0, 20);
+      }
+
+      // Cargar fecha existente o usar hoy
+      let fechaExistente = null;
+      if (campo === 'recib') fechaExistente = c.recib;
+      else if (campo === 'recibVenc') fechaExistente = c.recibVenc;
+      else if (campo === 'prep') fechaExistente = c.prep;
+      else if (campo === 'linea') fechaExistente = c.linea;
+
+      if (fechaExistente) {
+        const f = new Date(fechaExistente + 'T00:00');
+        fhDia = f.getDate(); fhMes = f.getMonth(); fhAnio = f.getFullYear();
+      } else {
+        const hoy = new Date();
+        fhDia = hoy.getDate(); fhMes = hoy.getMonth(); fhAnio = hoy.getFullYear();
+      }
+
+      if (campo === 'prep' && c.prepHora) {
+        const [h, m] = c.prepHora.split(':');
+        let hNum = parseInt(h);
+        hpAmpm = hNum >= 12 ? 'PM' : 'AM';
+        if (hNum > 12) hNum -= 12;
+        if (hNum === 0) hNum = 12;
+        hpHora = hNum; hpMin = parseInt(m) >= 30 ? 30 : 0;
+      } else if (campo === 'linea' && c.lineaHora) {
+        const [h, m] = c.lineaHora.split(':');
+        let hNum = parseInt(h);
+        hpAmpm = hNum >= 12 ? 'PM' : 'AM';
+        if (hNum > 12) hNum -= 12;
+        if (hNum === 0) hNum = 12;
+        hpHora = hNum; hpMin = parseInt(m) >= 30 ? 30 : 0;
+      } else {
+        hpHora = 12; hpMin = 0; hpAmpm = 'AM';
+      }
+
+      fhActualizarUI(); hpActualizarUI();
+      cerrarEditarMasivo();
+      document.getElementById('horaPickerOverlay').style.display = 'flex';
+    }
+
+    function aplicarMasivo() {
+      if (cesta.length === 0) { alert('Agrega al menos un producto a la cesta.'); return; }
+
+      masivoResultadosData = [];
+      cesta.forEach(c => {
+        const p = productos.find(x => x.id === c.id);
+        if (!p) return;
+
+        let vencRecibLocal = null;
+        let vencRecibManualLocal = null;
+        let res = { 
+          id: p.id, nombre: p.n, 
+          recib: null, recibVenc: null, recibVencManual: false,
+          prep: null, prepHora: null, prepVenc: null, 
+          linea: null, lineaHora: null, lineaVenc: null 
+        };
+
+        // PRIORIDAD 1: Vencimiento manual del empaque
+        if (c.recibVenc) {
+          let f = new Date(c.recibVenc + 'T23:59');
+          vencRecibManualLocal = f;
+          vencRecibLocal = f;
+          res.recibVenc = `${String(f.getDate()).padStart(2,'0')}\n${String(f.getMonth()+1).padStart(2,'0')}\n${String(f.getFullYear()).slice(2)}`;
+          res.recibVencManual = true;
+          if (c.recib) res.recib = c.recib;
+        }
+        // PRIORIDAD 2: Calcular desde fecha inicio
+        else if (c.recib) {
+          if (esDias(p.r)) {
+            let dias = parseInt(p.r);
+            let f = new Date(c.recib + 'T00:00');
+            let inicioRecib = p.n.includes('MOZZARELLA') ? rg('moz_recib') : rg('recib_inicio');
+            f.setDate(f.getDate() + (inicioRecib === 'DIA_1' ? dias - 1 : dias));
+            f.setHours(23, 59, 0, 0);
+            vencRecibLocal = f;
+            res.recib = c.recib;
+            res.recibVenc = `${String(f.getDate()).padStart(2,'0')}\n${String(f.getMonth()+1).padStart(2,'0')}\n${String(f.getFullYear()).slice(2)}`;
+          }
+        }
+
+        let vencPrepLocal = null;
+        const fmtF = (d) => `${String(d.getDate()).padStart(2,'0')}\n${String(d.getMonth()+1).padStart(2,'0')}\n${String(d.getFullYear()).slice(2)}`;
+        const hhmm = (d) => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        if (c.prep && c.prepHora) {
+          let regla = p.p;
+          let f = new Date(c.prep + 'T' + c.prepHora);
+          res.prep = c.prep;
+          res.prepHora = c.prepHora;
+          if (/SEGUN EMPAQUE/.test(norm(regla))) {
+            if (vencRecibLocal) {
+              f = new Date(vencRecibLocal);
+              vencPrepLocal = new Date(f);
+              res.prepVenc = fmtF(f);
+              res.prepHoraVenc = hora12(hhmm(f));
+            }
+          } else {
+            let fueLimitadoPorRecib = false;
+            if (esDias(regla)) {
+              let dias = parseInt(regla);
+              let inicio = p.n.includes('MOZZARELLA') ? rg('moz_prep') : rg('prep_inicio');
+              f.setDate(f.getDate() + (inicio === 'DIA_SIGUIENTE' ? dias : dias - 1));
+            }
+            if (esHoras(regla)) f.setHours(f.getHours() + parseInt(regla));
+            if (esCierre(regla)) { const ci = cierre(); f.setHours(ci.h, ci.mi, 0, 0); }
+            if (rg('respetar_tope') === 'SI' && vencRecibLocal && f > vencRecibLocal) {
+              f = new Date(vencRecibLocal);
+              fueLimitadoPorRecib = true;
+            }
+            if (fueLimitadoPorRecib && f.getHours() === 0 && f.getMinutes() === 0) {
+              f.setHours(23, 59, 0, 0);
+            }
+            vencPrepLocal = new Date(f);
+            res.prepVenc = fmtF(f);
+            res.prepHoraVenc = esCierre(regla) ? cierre().txt : hora12(hhmm(f));
+          }
+        }
+
+        if (c.linea && c.lineaHora) {
+          let regla = p.l;
+          let f = new Date(c.linea + 'T' + c.lineaHora);
+          res.linea = c.linea;
+          res.lineaHora = c.lineaHora;
+          if (/SEGUN EMPAQUE/.test(norm(regla))) {
+            const base = vencPrepLocal || vencRecibLocal;
+            if (base) {
+              f = new Date(base);
+              res.lineaVenc = fmtF(f);
+              res.lineaHoraVenc = hora12(hhmm(f));
+            }
+          } else {
+            let fueLimitado = false;
+            if (esDias(regla)) {
+              let dias = parseInt(regla);
+              let inicio = p.n.includes('MOZZARELLA') ? rg('moz_linea') : rg('linea_inicio');
+              f.setDate(f.getDate() + (inicio === 'DIA_SIGUIENTE' || inicio !== 'DIA_1' ? dias : dias - 1));
+            }
+            if (esHoras(regla)) f.setHours(f.getHours() + parseInt(regla));
+            if (esCierre(regla)) { const ci = cierre(); f.setHours(ci.h, ci.mi, 0, 0); }
+            if (rg('respetar_tope') === 'SI' && vencPrepLocal && f > vencPrepLocal) {
+              f = new Date(vencPrepLocal);
+              fueLimitado = true;
+            }
+            if (rg('respetar_tope') === 'SI' && vencRecibLocal && f > vencRecibLocal) {
+              f = new Date(vencRecibLocal);
+              fueLimitado = true;
+            }
+            if (fueLimitado && f.getHours() === 0 && f.getMinutes() === 0) {
+              f.setHours(23, 59, 0, 0);
+            }
+            res.lineaVenc = fmtF(f);
+            res.lineaHoraVenc = esCierre(regla) ? cierre().txt : hora12(hhmm(f));
+          }
+        }
+
+        masivoResultadosData.push(res);
+
+        // Guardar en historial
+        const histEntry = {
+          id: p.id, producto: p.n,
+          recibDate: res.recib || null,
+          recibVencDate: res.recibVenc ? `20${res.recibVenc.split('\n')[2]}-${res.recibVenc.split('\n')[1]}-${res.recibVenc.split('\n')[0]}` : null,
+          recibVencManual: res.recibVencManual,
+          prepDate: res.prep || null, lineaDate: res.linea || null,
+          prepHora: res.prepHora || null, lineaHora: res.lineaHora || null,
+          recib: res.recib ? vertical(res.recib) : null,
+          recibVenc: res.recibVenc || null,
+          prep: res.prep ? vertical(res.prep) : null,
+          prepVenc: res.prepVenc || null,
+          prepHoraVenc: res.prepHoraVenc || null,
+          linea: res.linea ? vertical(res.linea) : null,
+          lineaVenc: res.lineaVenc || null,
+          lineaHoraVenc: res.lineaHoraVenc || null,
+        };
+        historial.unshift(histEntry);
+      });
+
+      if (historial.length > MAX_HIST) historial = historial.slice(0, MAX_HIST);
+      localStorage.setItem("historial_fechados_v6", JSON.stringify(historial));
+      renderHistorial();
+      renderMasivoResultados();
+    }
+
+    function renderMasivoResultados() {
+      const box = document.getElementById('masivoResultados');
+      const lista = document.getElementById('masivoResultadosLista');
+      box.style.display = 'block';
+      lista.innerHTML = masivoResultadosData.map((r, idx) => {
+        let rows = '';
+        if (r.recib || r.recibVenc) {
+          let recibLabel = r.recibVencManual ? '📦 RECIB (EMP):' : '📦 RECIB:';
+          let recibVal = r.recib ? r.recib.replace(/-/g,'/') + ' → ' : '';
+          rows += `<div class="res-row"><span class="label">${recibLabel}</span><span class="val-recib">${recibVal}${r.recibVenc ? r.recibVenc.replace(/\n/g,'/') : ''}</span></div>`;
+        }
+        if (r.prep) rows += `<div class="res-row"><span class="label">🔓 PREP:</span><span class="val-prep">${r.prep.replace(/-/g,'/')} ${hora12(r.prepHora)} → ${r.prepVenc ? r.prepVenc.replace(/\n/g,'/') : ''} ${r.prepHoraVenc || ''}</span></div>`;
+        if (r.linea) rows += `<div class="res-row"><span class="label">📍 LINEA:</span><span class="val-linea">${r.linea.replace(/-/g,'/')} ${hora12(r.lineaHora)} → ${r.lineaVenc ? r.lineaVenc.replace(/\n/g,'/') : ''} ${r.lineaHoraVenc || ''}</span></div>`;
+        return `<div class="res-card" onclick="cargarResultadoMasivo(${idx})">
+          <div class="res-card-header">${r.nombre}</div>
+          <div class="res-card-body">${rows}</div>
+          <div class="res-hint">Toca para ver en modo individual</div>
+        </div>`;
+      }).join('');
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+
+    function cargarResultadoMasivo(idx) {
+      const r = masivoResultadosData[idx];
+      if (!r) return;
+      const prod = productos.find(p => p.id === r.id);
+      if (!prod) return;
+
+      if (actual) {
+        const recibF = document.getElementById('recibFecha').innerText;
+        const prepF = document.getElementById('prepFecha').innerText;
+        const lineaF = document.getElementById('lineaFecha').innerText;
+        if (recibF !== '--' || prepF !== '--' || lineaF !== '--') guardarHistorial();
+      }
+
+      actual = prod;
+      document.getElementById('search').value = actual.n;
+      document.getElementById('suggestions').style.display = 'none';
+      document.getElementById('rTop').innerText = actual.r;
+      document.getElementById('pTop').innerText = actual.p;
+      document.getElementById('lTop').innerText = actual.l;
+      limpiar();
+      renderFavoritos();
+
+      if (r.recib) {
+        document.getElementById('recibDate').value = r.recib;
+        document.getElementById('recibFecha').innerText = vertical(r.recib);
+      }
+      if (r.recibVenc) {
+        document.getElementById('recibVenc').innerText = r.recibVenc;
+        document.getElementById('recibVencDate').value = `20${r.recibVenc.split('\n')[2]}-${r.recibVenc.split('\n')[1]}-${r.recibVenc.split('\n')[0]}`;
+        if (r.recibVencManual) {
+          document.getElementById('recibVenc').classList.add('venc-manual');
+          document.getElementById('recibVencManualBadge').style.display = 'block';
+          vencRecibManual = new Date(`20${r.recibVenc.split('\n')[2]}-${r.recibVenc.split('\n')[1]}-${r.recibVenc.split('\n')[0]}T23:59`);
+          vencRecib = vencRecibManual;
+        } else {
+          vencRecib = new Date(`20${r.recibVenc.split('\n')[2]}-${r.recibVenc.split('\n')[1]}-${r.recibVenc.split('\n')[0]}T23:59`);
+        }
+      }
+      if (r.prep) {
+        document.getElementById('prepDate').value = r.prep;
+        document.getElementById('prepFecha').innerText = vertical(r.prep);
+        document.getElementById('prepHoraTxt').innerText = hora12(r.prepHora);
+        if (r.prepVenc) document.getElementById('prepVenc').innerText = r.prepVenc;
+        if (r.prepHoraVenc) document.getElementById('prepHoraVenc').innerText = r.prepHoraVenc;
+      }
+      if (r.linea) {
+        document.getElementById('lineaDate').value = r.linea;
+        document.getElementById('lineaFecha').innerText = vertical(r.linea);
+        document.getElementById('lineaHoraTxt').innerText = hora12(r.lineaHora);
+        if (r.lineaVenc) document.getElementById('lineaVenc').innerText = r.lineaVenc;
+        if (r.lineaHoraVenc) document.getElementById('lineaHoraVenc').innerText = r.lineaHoraVenc;
+      }
+
+      cambiarModo('individual');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ===== TABLA DE VIDA ÚTIL (se lee del repositorio: tabla/versiones.json) =====
+    function parseLineaCSV(linea, sep = ',') {
+      let cols = [], cur = "", dentroComillas = false, inicioDeCampo = true;
+      for (let i = 0; i < linea.length; i++) {
+        let ch = linea[i];
+        if (ch === '"' && inicioDeCampo && cur === "") { dentroComillas = true; inicioDeCampo = false; continue; }
+        if (ch === '"' && dentroComillas) {
+          let sig = linea[i + 1];
+          if (sig === sep || sig === undefined) { dentroComillas = false; continue; }
+          cur += ch; continue;
+        }
+        if (ch === sep && !dentroComillas) { cols.push(cur); cur = ""; inicioDeCampo = true; continue; }
+        cur += ch; inicioDeCampo = false;
+      }
+      cols.push(cur);
+      return cols;
+    }
+
+    // Convierte el CSV (Nombre,Recibido,Preparado,Linea) en productos; los que ya existían conservan su ID
+    function parseTabla(texto, viejos) {
+      const lineas = String(texto || '').split(/\r?\n/);
+      const primera = lineas.find(l => l.trim()) || '';
+      const sep = primera.split(';').length > primera.split(',').length ? ';' : ',';
+      const usados = new Set();
+      let maxId = Math.max(0, ...viejos.map(p => p.id));
+      const nuevos = [];
+      lineas.forEach(linea => {
+        if (!linea.trim()) return;
+        const cols = parseLineaCSV(linea, sep);
+        if (cols.length < 4) return;
+        const nom = (cols[0] || "").trim().replace(/["']/g, "").toUpperCase();
+        if (!nom || nom === "NOMBRE") return;
+        const previo = viejos.find(p => p.n === nom && !usados.has(p.id));
+        let id;
+        if (previo) { id = previo.id; usados.add(id); } else { id = ++maxId; }
+        nuevos.push({ id, n: nom, r: (cols[1] || "").trim().toUpperCase(), p: (cols[2] || "").trim().toUpperCase(), l: (cols[3] || "").trim().toUpperCase() });
+      });
+      return nuevos;
+    }
+
+    // Favoritos, historial y cesta guardan el ID: al cambiar la tabla se vuelven a enlazar por nombre
+    function remapearReferencias(viejos, nuevos) {
+      const porNombre = (n) => nuevos.find(p => p.n === n);
+      favoritos = favoritos.map(fid => {
+        const v = viejos.find(p => p.id === fid);
+        const np = v && porNombre(v.n);
+        return np ? np.id : null;
+      }).filter(x => x !== null);
+      localStorage.setItem("favoritos_fechados_v6", JSON.stringify(favoritos));
+      historial.forEach(h => { const np = porNombre(h.producto); if (np) h.id = np.id; });
+      localStorage.setItem("historial_fechados_v6", JSON.stringify(historial));
+      cesta = cesta.map(c => { const np = porNombre(c.nombre); return np ? Object.assign({}, c, { id: np.id }) : null; }).filter(Boolean);
+      masivoResultadosData.forEach(r => { const np = porNombre(r.nombre); if (np) r.id = np.id; });
+      renderCesta(); renderFavoritos(); renderHistorial();
+    }
+
+    function mostrarVersionTabla(etiqueta, sinConexion) {
+      const el = document.getElementById('versionTabla');
+      if (!el) return;
+      el.innerText = 'TABLA DE VIDA ÚTIL · ' + (etiqueta || 'INTEGRADA') + (sinConexion ? ' · SIN CONEXIÓN' : '');
+    }
+
+    async function cargarTabla() {
+      const guardada = leerCacheTabla();
+      try {
+        const rv = await fetch('tabla/versiones.json?_=' + Date.now(), { cache: 'no-store' });
+        if (!rv.ok) throw new Error('versiones.json');
+        const idx = await rv.json();
+        const ver = (idx.versiones || []).find(v => v.id === idx.actual);
+        if (!ver || !ver.archivo) throw new Error('versión actual no encontrada');
+        const rc = await fetch(ver.archivo + '?_=' + Date.now(), { cache: 'no-store' });
+        if (!rc.ok) throw new Error(ver.archivo);
+        const nuevos = parseTabla(await rc.text(), productos);
+        if (nuevos.length === 0) throw new Error('tabla vacía');
+        const viejos = productos;
+        productos = nuevos;
+        reglas = Object.assign({}, REGLAS_DEF, ver.reglas || {});
+        localStorage.setItem(TABLA_CACHE, JSON.stringify({ id: ver.id, etiqueta: ver.etiqueta, productos: nuevos, reglas: ver.reglas || {} }));
+        remapearReferencias(viejos, nuevos);
+        if (actual) {
+          const np = productos.find(p => p.n === actual.n);
+          if (np) {
+            actual = np;
+            document.getElementById('rTop').innerText = np.r;
+            document.getElementById('pTop').innerText = np.p;
+            document.getElementById('lTop').innerText = np.l;
+          }
+        }
+        mostrarVersionTabla(ver.etiqueta, false);
+      } catch (e) {
+        mostrarVersionTabla(guardada ? guardada.etiqueta : null, true);
+      }
+    }
+
+    // ===== INIT =====
+    document.addEventListener('DOMContentLoaded', function() {
+      renderHistorial();
+      renderFavoritos();
+      mostrarVersionTabla(tablaCache ? tablaCache.etiqueta : null, false);
+      cargarTabla();
+    });
+  </script>
+</body>
+</html>
